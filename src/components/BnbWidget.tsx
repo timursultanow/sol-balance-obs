@@ -397,7 +397,7 @@ export const BnbWidget: React.FC<Props> = ({
     fetchBalance();
     fetchBnbPrice();
     const interval = setInterval(fetchBalance, 3000); // Обновляем каждые 3 секунды
-    const priceInterval = setInterval(fetchBnbPrice, 30000); // Обновляем цену каждые 30 секунд
+    const priceInterval = setInterval(fetchBnbPrice, 3000); // Обновляем цену каждые 3 секунды
 
     return () => {
       isMounted = false;

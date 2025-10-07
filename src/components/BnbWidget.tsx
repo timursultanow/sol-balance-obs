@@ -52,13 +52,13 @@ const WidgetContainer = styled.div<{
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 30px;
+  gap: 35px;
   background: rgba(26, 27, 38, 0.95);
   border-radius: 12px;
-  padding: 10px 25px;
+  padding: 12px 25px;
   color: white;
-  width: 340px;
-  height: 70px;
+  width: 380px;
+  height: 75px;
   position: relative;
   backdrop-filter: blur(10px);
   font-family: 'Inter', sans-serif;
@@ -145,20 +145,20 @@ const ValueContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-width: 120px;
+  gap: 3px;
+  min-width: 140px;
   animation: ${fadeIn} 0.3s ease-out;
   position: relative;
-  padding: 4px 0;
+  padding: 3px 0;
 
   &:first-child::after {
     content: '';
     position: absolute;
-    right: -15px;
+    right: -17px;
     top: 50%;
     transform: translateY(-50%);
     width: 1px;
-    height: 40px;
+    height: 35px;
     background: linear-gradient(
       180deg,
       transparent,
@@ -171,16 +171,36 @@ const ValueContainer = styled.div`
 const Label = styled.div`
   color: #f3ba2f;
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   opacity: 0.9;
+`;
+
+const BnbIcon = styled.div`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f3ba2f 0%, #ffd700 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+  color: #000;
+  margin-right: 5px;
+  flex-shrink: 0;
+  
+  &::before {
+    content: 'B';
+    font-family: 'Inter', sans-serif;
+  }
 `;
 
 const Value = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZero?: boolean }>`
   font-family: 'Space Mono', monospace;
-  font-size: 32px;
+  font-size: 20px;
   font-weight: 700;
   color: ${props => {
     if (!props.isProfit) return '#ffd700';
@@ -197,13 +217,19 @@ const Value = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZer
   &:hover {
     transform: scale(1.02);
   }
+`;
 
-  &::after {
-    content: 'BNB';
-    font-size: 28px;
-    opacity: 0.8;
-    margin-left: 2px;
-  }
+const UsdValue = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZero?: boolean }>`
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${props => {
+    if (!props.isProfit) return '#ffd700';
+    if (props.isZero) return '#f3ba2f';
+    return props.isProfitNegative ? '#ff6b6b' : '#4ecdc4';
+  }};
+  opacity: 0.8;
+  margin-top: 1px;
 `;
 
 const EmojiParticle = styled.div`
@@ -249,6 +275,7 @@ export const BnbWidget: React.FC<Props> = ({
   const [emojis, setEmojis] = useState<EmojiParticle[]>([]);
   const [lastBalance, setLastBalance] = useState<number>(0);
   const [lastBalanceUpdateTime, setLastBalanceUpdateTime] = useState<number>(0);
+  const [bnbPrice, setBnbPrice] = useState<number>(0);
 
   console.log('BnbWidget rendered with walletAddress:', walletAddress);
 
@@ -302,6 +329,16 @@ export const BnbWidget: React.FC<Props> = ({
     console.log('Сбрасываем точку отсчета профита на текущий баланс:', balance);
     setInitialPoint(balance);
     setProfit(0);
+  };
+
+  const fetchBnbPrice = async () => {
+    try {
+      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
+      const data = await response.json();
+      setBnbPrice(parseFloat(data.price));
+    } catch (error) {
+      console.error('Ошибка получения цены BNB:', error);
+    }
   };
 
   useEffect(() => {
@@ -362,11 +399,14 @@ export const BnbWidget: React.FC<Props> = ({
     };
 
     fetchBalance();
+    fetchBnbPrice();
     const interval = setInterval(fetchBalance, 10000); // Обновляем каждые 10 секунд
+    const priceInterval = setInterval(fetchBnbPrice, 30000); // Обновляем цену каждые 30 секунд
 
     return () => {
       isMounted = false;
       clearInterval(interval);
+      clearInterval(priceInterval);
     };
   }, [walletAddress, initialPoint]);
 
@@ -407,26 +447,46 @@ export const BnbWidget: React.FC<Props> = ({
         ))}
         <ValueContainer>
           <Label>Депозит</Label>
-          <Value>
-            {isLoading ? '...' : error ? '???' : balance.toFixed(4)}
-          </Value>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <BnbIcon />
+            <Value>
+              {isLoading ? '...' : error ? '???' : balance.toFixed(3)}
+            </Value>
+          </div>
+          <UsdValue>
+            {isLoading || error || bnbPrice === 0 ? '...' : `Bal $${(balance * bnbPrice).toFixed(2)}`}
+          </UsdValue>
         </ValueContainer>
         <ValueContainer>
           <Label>Профит</Label>
-          <Value 
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <BnbIcon />
+            <Value 
+              isProfit 
+              isProfitNegative={profit < 0}
+              isZero={profit === 0}
+              onClick={resetProfit}
+            >
+              {isLoading
+                ? '...'
+                : error
+                ? '???'
+                : profit === 0
+                ? '0.000'
+                : `${profit > 0 ? '+' : ''}${profit.toFixed(3)}`}
+            </Value>
+          </div>
+          <UsdValue 
             isProfit 
             isProfitNegative={profit < 0}
             isZero={profit === 0}
-            onClick={resetProfit}
           >
-            {isLoading
-              ? '...'
-              : error
-              ? '???'
-              : profit === 0
-              ? '0.0000'
-              : `${profit > 0 ? '+' : ''}${profit.toFixed(4)}`}
-          </Value>
+            {isLoading || error || bnbPrice === 0 
+              ? '...' 
+              : profit === 0 
+              ? '0.00%'
+              : `${profit > 0 ? '+' : ''}$${(profit * bnbPrice).toFixed(2)} (${profitPercentage > 0 ? '+' : ''}${profitPercentage.toFixed(2)}%)`}
+          </UsdValue>
         </ValueContainer>
       </WidgetContainer>
     </>

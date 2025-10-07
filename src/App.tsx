@@ -1,5 +1,5 @@
 import React from 'react';
-import { SolanaWidget } from './components/SolanaWidget';
+import { BnbWidget } from './components/BnbWidget';
 
 function App() {
   return (
@@ -11,8 +11,8 @@ function App() {
       alignItems: 'center',
       background: 'transparent'
     }}>
-      <SolanaWidget 
-        walletAddress="E6eHfFSmD6Ed19hWfLdLe1tqgryJwwARK66arkNBMEnx"
+      <BnbWidget 
+        walletAddress="0x8894E0a0c962CB723c1976a4421c95949bE2D4E3"
         initialBalance={0}
       />
     </div>

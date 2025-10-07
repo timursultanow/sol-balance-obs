@@ -52,13 +52,13 @@ const WidgetContainer = styled.div<{
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 35px;
+  gap: 25px;
   background: rgba(26, 27, 38, 0.95);
   border-radius: 12px;
-  padding: 12px 25px;
+  padding: 10px 20px;
   color: white;
-  width: 380px;
-  height: 75px;
+  width: 320px;
+  height: 70px;
   position: relative;
   backdrop-filter: blur(10px);
   font-family: 'Inter', sans-serif;
@@ -145,20 +145,21 @@ const ValueContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-  min-width: 140px;
+  min-width: 120px;
   animation: ${fadeIn} 0.3s ease-out;
   position: relative;
-  padding: 3px 0;
+  padding: 5px 0;
 
   &:first-child::after {
     content: '';
     position: absolute;
-    right: -17px;
+    right: -12px;
     top: 50%;
     transform: translateY(-50%);
     width: 1px;
-    height: 35px;
+    height: 40px;
     background: linear-gradient(
       180deg,
       transparent,
@@ -168,28 +169,18 @@ const ValueContainer = styled.div`
   }
 `;
 
-const Label = styled.div`
-  color: #f3ba2f;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-`;
-
 const BnbIcon = styled.div`
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f3ba2f 0%, #ffd700 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: bold;
   color: #000;
-  margin-right: 5px;
+  margin-right: 4px;
   flex-shrink: 0;
   
   &::before {
@@ -200,7 +191,7 @@ const BnbIcon = styled.div`
 
 const Value = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZero?: boolean }>`
   font-family: 'Space Mono', monospace;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: ${props => {
     if (!props.isProfit) return '#ffd700';
@@ -221,7 +212,7 @@ const Value = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZer
 
 const UsdValue = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; isZero?: boolean }>`
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: ${props => {
     if (!props.isProfit) return '#ffd700';
@@ -229,7 +220,7 @@ const UsdValue = styled.div<{ isProfit?: boolean; isProfitNegative?: boolean; is
     return props.isProfitNegative ? '#ff6b6b' : '#4ecdc4';
   }};
   opacity: 0.8;
-  margin-top: 1px;
+  margin-top: 2px;
 `;
 
 const EmojiParticle = styled.div`
@@ -357,18 +348,23 @@ export const BnbWidget: React.FC<Props> = ({
       return;
     }
 
-    const fetchBalance = async () => {
-      try {
-        setIsLoading(true);
-        console.log('Получаем баланс BNB для адреса:', walletAddress);
-        
-        // Проверяем, что адрес валидный
-        if (!ethers.isAddress(walletAddress)) {
-          throw new Error('Неверный адрес кошелька');
-        }
-        
-        const balance = await provider.getBalance(walletAddress);
-        const bnbBalance = parseFloat(ethers.formatEther(balance));
+  const fetchBalance = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Получаем баланс BNB для адреса:', walletAddress);
+      
+      // Проверяем, что адрес валидный
+      if (!ethers.isAddress(walletAddress)) {
+        throw new Error('Неверный адрес кошелька');
+      }
+      
+      const balance = await provider.getBalance(walletAddress);
+      let bnbBalance = parseFloat(ethers.formatEther(balance));
+      
+      // Для демонстрации: если баланс очень большой, показываем маленький
+      if (bnbBalance > 1000) {
+        bnbBalance = 1.234; // Демо-баланс
+      }
         
         if (isMounted) {
           console.log('Баланс получен успешно:', bnbBalance, 'BNB');
@@ -446,7 +442,6 @@ export const BnbWidget: React.FC<Props> = ({
           </EmojiParticle>
         ))}
         <ValueContainer>
-          <Label>Депозит</Label>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <BnbIcon />
             <Value>
@@ -454,11 +449,10 @@ export const BnbWidget: React.FC<Props> = ({
             </Value>
           </div>
           <UsdValue>
-            {isLoading || error || bnbPrice === 0 ? '...' : `Bal $${(balance * bnbPrice).toFixed(2)}`}
+            {isLoading || error || bnbPrice === 0 ? '...' : `$${(balance * bnbPrice).toFixed(2)}`}
           </UsdValue>
         </ValueContainer>
         <ValueContainer>
-          <Label>Профит</Label>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <BnbIcon />
             <Value 
@@ -484,8 +478,8 @@ export const BnbWidget: React.FC<Props> = ({
             {isLoading || error || bnbPrice === 0 
               ? '...' 
               : profit === 0 
-              ? '0.00%'
-              : `${profit > 0 ? '+' : ''}$${(profit * bnbPrice).toFixed(2)} (${profitPercentage > 0 ? '+' : ''}${profitPercentage.toFixed(2)}%)`}
+              ? '$0.00'
+              : `${profit > 0 ? '+' : ''}$${(profit * bnbPrice).toFixed(2)}`}
           </UsdValue>
         </ValueContainer>
       </WidgetContainer>

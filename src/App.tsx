@@ -12,7 +12,7 @@ function App() {
       background: 'transparent'
     }}>
       <BnbWidget 
-        walletAddress="0x8894E0a0c962CB723c1976a4421c95949bE2D4E3"
+        walletAddress="0x28C6c06298d514Db089934071355E5743bf21d60"
         initialBalance={0}
       />
     </div>
